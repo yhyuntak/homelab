@@ -53,11 +53,7 @@ jobs:
 
       # SSH 연결 테스트
       - name: Test SSH Connection
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            -o ConnectTimeout=30 \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            'echo SSH connection successful'
+        run: ssh -i ~/.ssh/deploy_key -o ConnectTimeout=30 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH OK"
 
       # 코드 동기화
       - name: Sync code to server

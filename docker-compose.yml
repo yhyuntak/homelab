@@ -1,0 +1,41 @@
+# =============================================================================
+# Homelab - Docker Compose
+# =============================================================================
+# 실행: docker-compose -p homelab up -d
+# 종료: docker-compose -p homelab down
+# 로그: docker-compose -p homelab logs -f
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Claude Ping Service
+  # ===========================================================================
+  claude-ping:
+    build:
+      context: ./services/claude-ping
+      dockerfile: Dockerfile
+    container_name: homelab-claude-ping
+    restart: unless-stopped
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - TZ=Asia/Seoul
+    volumes:
+      # Claude Code credentials (다른 프로젝트에서 external로 참조 가능)
+      - homelab-claude:/home/appuser/.claude
+    networks:
+      - homelab
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  homelab:
+    name: homelab
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  homelab-claude:
+    name: homelab-claude

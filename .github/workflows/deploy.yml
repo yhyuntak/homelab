@@ -1,0 +1,121 @@
+# =============================================================================
+# Homelab - CI/CD Pipeline
+# =============================================================================
+# main 브랜치 푸시 → NAS 배포
+#
+# 필요한 GitHub Secrets (이 레포에 별도 등록 필요):
+#   - TS_OAUTH_CLIENT_ID: Tailscale OAuth 클라이언트 ID
+#   - TS_OAUTH_SECRET: Tailscale OAuth 시크릿
+#   - SSH_PRIVATE_KEY: NAS 접속용 SSH 개인키 (base64 인코딩)
+#   - SERVER_HOST: NAS의 Tailscale IP (100.x.x.x)
+#   - SERVER_USER: NAS SSH 사용자명
+#   - SLACK_WEBHOOK_URL: Slack 알림용 (optional)
+# =============================================================================
+
+name: Deploy to NAS
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  DEPLOY_PATH: ~/homelab
+
+jobs:
+  deploy:
+    name: Deploy to NAS
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tailscale VPN 연결
+      - name: Setup Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # SSH 키 설정
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
+
+      # SSH 연결 테스트
+      - name: Test SSH Connection
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o ConnectTimeout=30 \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo '✅ SSH connection successful!'"
+
+      # 코드 동기화
+      - name: Sync code to server
+        run: |
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude '__pycache__' \
+            --exclude '.env' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/
+
+      # Docker Compose 배포
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
+            cd ${{ env.DEPLOY_PATH }}
+
+            # docker-compose 명령어 결정 (Synology NAS 호환)
+            if command -v docker-compose &> /dev/null; then
+              DOCKER_COMPOSE="docker-compose"
+            else
+              DOCKER_COMPOSE="docker compose"
+            fi
+            echo "📦 Using: $DOCKER_COMPOSE"
+
+            # .env 파일 생성 (없으면)
+            if [ ! -f ".env" ]; then
+              echo "📝 Creating .env from .env.example"
+              if [ -f ".env.example" ]; then
+                cp .env.example .env
+                echo "⚠️  .env created from example. Please update with actual values!"
+              fi
+            fi
+
+            echo "🚀 Deploying Homelab services"
+            echo ""
+
+            # 빌드 및 배포
+            $DOCKER_COMPOSE -p homelab build --no-cache
+            $DOCKER_COMPOSE -p homelab up -d
+
+            # 오래된 이미지 정리
+            docker image prune -f
+
+            echo ""
+            echo "✅ Deployment complete!"
+            echo ""
+            $DOCKER_COMPOSE -p homelab ps
+          ENDSSH
+
+      # 결과 요약
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "=========================================="
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Homelab deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+          fi
+          echo "=========================================="

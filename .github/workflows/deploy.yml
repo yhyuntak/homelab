@@ -57,7 +57,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -o ConnectTimeout=30 \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo '✅ SSH connection successful!'"
+            'echo SSH connection successful'
 
       # 코드 동기화
       - name: Sync code to server

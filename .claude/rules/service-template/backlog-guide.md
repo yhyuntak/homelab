@@ -1,21 +1,67 @@
-# 백로그 관리 규칙
+# 서비스별 백로그 가이드
 
-> Epic/Story 기반 백로그 시스템
+> Epic/Story 기반 백로그 시스템 (옵션)
+
+---
+
+## 백로그가 필요한 경우
+
+### ✅ 백로그 사용 추천
+
+- 복잡한 기능 개발 (3개 이상의 구현 단계)
+- 여러 스텝이 필요한 작업
+- 팀원과 공유가 필요한 작업
+- 기획부터 구현까지 긴 프로젝트
+
+### ⏭️ 백로그 없이 진행 가능
+
+- 간단한 유틸리티 (1-2파일)
+- 빠른 프로토타입
+- 즉시 구현 가능한 작은 기능
 
 ---
 
 ## 폴더 구조
 
+### 루트 백로그 (`docs/backlogs/`)
+
+**용도**: 전체 homelab 인프라 관련
+
 ```
 docs/backlogs/
-├── README.md                    # 전체 현황 대시보드
-│
-├── epic{N}-{slug}/
-│   ├── overview.md              # Epic 설명 (고정)
-│   ├── todo/                    # 대기 중인 Story
-│   ├── in-progress/             # 진행 중인 Story
-│   └── done/                    # 완료된 Story
+├── README.md
+└── epic{N}-{slug}/
+    ├── overview.md
+    ├── todo/
+    ├── in-progress/
+    └── done/
 ```
+
+**예시**:
+- Epic: NAS 통합 배포 자동화
+- Epic: 공통 모니터링 시스템
+- Epic: 네트워크 보안 설정
+
+---
+
+### 서비스별 백로그 (`services/{name}/docs/backlogs/`)
+
+**용도**: 해당 서비스만의 기능 개발
+
+```
+services/trend-radar/docs/backlogs/
+├── README.md
+└── epic{N}-{slug}/
+    ├── overview.md
+    ├── todo/
+    ├── in-progress/
+    └── done/
+```
+
+**예시**:
+- Epic: 트렌드 데이터 수집 기능
+- Epic: 분석 API 구현
+- Epic: 알림 시스템
 
 ---
 
@@ -185,4 +231,46 @@ mv epic0-project-setup/in-progress/story-01-*.md \
 
 ---
 
-**Last Updated**: {LAST_UPDATE_DATE}
+## 서비스별 백로그 예시
+
+### Trend Radar 서비스
+
+```
+services/trend-radar/docs/backlogs/
+├── README.md
+├── epic0-data-collection/
+│   ├── overview.md
+│   ├── todo/
+│   │   └── story-01-github-api.md
+│   ├── in-progress/
+│   └── done/
+└── epic1-analysis/
+    ├── overview.md
+    ├── todo/
+    ├── in-progress/
+    └── done/
+```
+
+### Ping Service 백로그 없이 진행
+
+```
+services/ping-service/
+├── docs/
+│   └── README.md        # 백로그 없이 간단한 문서만
+├── src/
+└── Dockerfile
+```
+
+---
+
+## 참고 문서
+
+| 문서 | 경로 |
+|------|------|
+| homelab 구조 | [../homelab-structure.md](../homelab-structure.md) |
+| 워크플로우 | [../workflow.md](../workflow.md) |
+| 코딩 규칙 | [./coding-standards.md](./coding-standards.md) |
+
+---
+
+**Last Updated**: 2026-01-04

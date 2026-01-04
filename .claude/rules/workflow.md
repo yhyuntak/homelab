@@ -89,13 +89,34 @@ MINOR: 새 기능 추가 (v0.1.0 → v0.2.0)
 PATCH: 버그 수정 (v0.1.0 → v0.1.1)
 ```
 
+### 서비스별 태그 vs 전체 태그
+
+**서비스별 태그** (개별 서비스 릴리즈):
+```bash
+# 형식: {service-name}-v{version}
+git tag -a trend-radar-v0.1.0 -m "Trend Radar: 첫 번째 릴리즈"
+git tag -a ping-service-v0.2.0 -m "Ping Service: 알림 기능 추가"
+git push origin --tags
+```
+
+**전체 홈랩 태그** (모든 서비스 통합 릴리즈):
+```bash
+# 형식: homelab-v{version}
+git tag -a homelab-v1.0.0 -m "Homelab: 전체 서비스 통합 릴리즈"
+git push origin homelab-v1.0.0
+```
+
 ### 릴리즈 절차
 
 **옵션 A (단순):**
 ```bash
-# main에서 태그 생성
-git tag -a v0.1.0 -m "첫 번째 릴리즈"
-git push origin v0.1.0
+# 서비스별 릴리즈
+git tag -a trend-radar-v0.1.0 -m "Trend Radar: 첫 번째 릴리즈"
+git push origin trend-radar-v0.1.0
+
+# 전체 릴리즈 (모든 서비스 안정화 후)
+git tag -a homelab-v1.0.0 -m "Homelab 전체 릴리즈"
+git push origin homelab-v1.0.0
 ```
 
 **옵션 B (표준):**
@@ -106,74 +127,22 @@ git pull origin main
 git merge develop
 git push origin main
 
-# 2. 태그 생성
-git tag -a v0.1.0 -m "첫 번째 릴리즈"
-git push origin v0.1.0
+# 2. 서비스별 태그 생성
+git tag -a trend-radar-v0.1.0 -m "Trend Radar: 첫 번째 릴리즈"
+git push origin trend-radar-v0.1.0
 
 # 3. (선택) GitHub Release 생성
-gh release create v0.1.0 --title "v0.1.0" --notes "릴리즈 노트..."
-```
-
----
-
-## 백로그 관리
-
-> 상세: [backlog-rules.md](backlog-rules.md)
-
-### 폴더 구조
-
-```
-docs/backlogs/
-├── README.md                    # 전체 현황 대시보드
-│
-├── epic0-project-setup/
-│   ├── overview.md              # Epic 설명
-│   ├── todo/                    # 대기 중
-│   ├── in-progress/             # 진행 중
-│   └── done/                    # 완료
-```
-
-### 작업 플로우
-
-**1. 백로그 선택**
-```
-docs/backlogs/README.md → todo/ 폴더에서 작업할 항목 선택
-```
-
-**2. 백로그 상태 변경 (todo → in-progress)**
-
-> **트리거 신호**: "진행한다", "시작하자", "할게" 등
-
-```bash
-# 파일 이동
-mv docs/backlogs/epic0-project-setup/todo/story-01-*.md \
-   docs/backlogs/epic0-project-setup/in-progress/
-
-# README.md 업데이트 (상태, 링크 경로, 현황 개수)
-```
-
-**3. 구현 + 커밋**
-```bash
-git add .
-git commit -m "feat: Story 01 구현"
-git push origin main  # 또는 develop
-```
-
-**4. 백로그 완료 (in-progress → done)**
-```bash
-# 파일 이동
-mv docs/backlogs/epic0-project-setup/in-progress/story-01-*.md \
-   docs/backlogs/epic0-project-setup/done/
-
-# README.md 업데이트 (상태, 링크 경로, 현황 개수)
+gh release create trend-radar-v0.1.0 --title "Trend Radar v0.1.0" --notes "릴리즈 노트..."
 ```
 
 ---
 
 ## 커밋 메시지 규칙
 
+### 기본 형식
+
 ```
-<type>: <description>
+<type>(<scope>): <description>
 
 # 타입
 feat:     새 기능
@@ -185,6 +154,44 @@ style:    코드 스타일
 test:     테스트 추가/수정
 ```
 
+### 스코프 (Scope)
+
+**서비스별 변경**:
+```bash
+feat(trend-radar): 트렌드 분석 API 추가
+fix(ping-service): 헬스체크 타임아웃 수정
+refactor(trend-radar): 데이터 수집 로직 개선
+```
+
+**전체 홈랩 변경**:
+```bash
+chore(homelab): docker-compose 네트워크 설정 변경
+docs(homelab): 아키텍처 문서 업데이트
+feat(homelab): 공통 모니터링 추가
+```
+
+**스코프 생략 가능** (작은 변경):
+```bash
+docs: README 오타 수정
+chore: .gitignore 업데이트
+```
+
+### 예시
+
+```bash
+# 서비스 기능 추가
+feat(trend-radar): 기술 트렌드 데이터 수집 기능 추가
+
+# 서비스 버그 수정
+fix(ping-service): 연결 실패 시 재시도 로직 수정
+
+# 인프라 변경
+chore(homelab): NAS 배포용 환경 변수 추가
+
+# 문서 업데이트
+docs(trend-radar): API 사용법 문서 작성
+```
+
 ---
 
-**Last Updated**: {LAST_UPDATE_DATE}
+**Last Updated**: 2026-01-04

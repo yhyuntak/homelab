@@ -111,15 +111,27 @@ async def main() -> None:
 
     scheduler = AsyncIOScheduler(timezone=TZ)
 
-    # 08:00, 13:00, 18:00 KST에 실행
-    for hour in [8, 13, 18]:
+    # 평일 (월~금): 08:00, 13:00, 18:00 KST
+    weekday_hours = [8, 13, 18]
+    for hour in weekday_hours:
         scheduler.add_job(
             claude_ping,
-            CronTrigger(hour=hour, minute=0, timezone=TZ),
-            id=f"claude_ping_{hour}",
-            name=f"Claude Ping at {hour}:00 KST",
+            CronTrigger(hour=hour, minute=0, day_of_week='mon-fri', timezone=TZ),
+            id=f"claude_ping_weekday_{hour}",
+            name=f"Claude Ping (Weekday) at {hour}:00 KST",
         )
-        log(f"Scheduled: Claude ping at {hour:02d}:00 KST")
+        log(f"Scheduled (Weekday): Claude ping at {hour:02d}:00 KST")
+
+    # 주말 (토~일): 05:00, 10:00, 15:00 KST
+    weekend_hours = [5, 10, 15]
+    for hour in weekend_hours:
+        scheduler.add_job(
+            claude_ping,
+            CronTrigger(hour=hour, minute=0, day_of_week='sat-sun', timezone=TZ),
+            id=f"claude_ping_weekend_{hour}",
+            name=f"Claude Ping (Weekend) at {hour}:00 KST",
+        )
+        log(f"Scheduled (Weekend): Claude ping at {hour:02d}:00 KST")
 
     scheduler.start()
     log("Scheduler started, waiting for jobs...")
@@ -127,7 +139,8 @@ async def main() -> None:
     # 시작 알림
     await send_slack_message(
         "🚀 Claude Ping Service 시작됨\n"
-        "• 스케줄: 08:00, 13:00, 18:00 KST"
+        "• 평일 스케줄: 08:00, 13:00, 18:00 KST\n"
+        "• 주말 스케줄: 05:00, 10:00, 15:00 KST"
     )
 
     # 무한 대기
